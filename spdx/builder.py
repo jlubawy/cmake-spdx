@@ -25,7 +25,7 @@ class BuilderDocumentConfig:
         self.extRefs = []
 
         # configs for packages: package root dir => BuilderPackageConfig
-        self.packageConfigs = {}
+        self.packageConfigs: dict[str, BuilderPackageConfig] = {}
 
 class BuilderPackageConfig:
 
@@ -50,7 +50,7 @@ class BuilderPackageConfig:
         self.shouldConcludeLicense = True
 
         # declared license, defaults to "NOASSERTION"
-        self.declaredLicense = "NOASSERTION"
+        self.licenseDeclared = "NOASSERTION"
 
         # copyright text, defaults to "NOASSERTION"
         self.copyrightText = "NOASSERTION"
@@ -74,6 +74,9 @@ class BuilderPackageConfig:
         # number of lines to scan for SPDX-License-Identifier (0 = all)
         # defaults to 20
         self.numLinesScanned = 20
+
+        # ExternalRef(s) for this package
+        self.externalRefs: list[str] = []
 
 class BuilderDocument:
     def __init__(self, docCfg):
@@ -99,7 +102,8 @@ class BuilderPackage:
         self.verificationCode = ""
         self.licenseConcluded = "NOASSERTION"
         self.licenseInfoFromFiles = []
-        self.licenseDeclared = pkgCfg.declaredLicense
+        self.licenseDeclared = pkgCfg.licenseDeclared
+        self.externalRefs = pkgCfg.externalRefs
         self.copyrightText = pkgCfg.copyrightText
         self.files = []
 
@@ -468,6 +472,9 @@ FilesAnalyzed: true
 PackageVerificationCode: {pkg.verificationCode}
 PackageLicenseConcluded: {pkg.licenseConcluded}
 """)
+                for externalRef in pkg.externalRefs:
+                    f.write(f"ExternalRef: {externalRef}\n")
+
                 for licFromFiles in pkg.licenseInfoFromFiles:
                     f.write(f"PackageLicenseInfoFromFiles: {licFromFiles}\n")
                 f.write(f"""PackageLicenseDeclared: {pkg.licenseDeclared}

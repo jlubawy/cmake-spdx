@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+from typing import Callable, Optional
 
 from cmakefileapi import TargetType
 from cmakefileapijson import parseReply
@@ -18,12 +19,15 @@ class Config:
                  spdxOutputDir: str,
                  spdxNamespacePrefix: str,
                  excludeDirs: list[str],
-                 documentNamePrefix: str = ""):
+                 documentNamePrefix: str = "",
+                 packageConfigOverride: Optional[Callable[[str, BuilderPackageConfig], None]] = None):
         self.replyIndexPath = replyIndexPath
         self.spdxOutputDir = spdxOutputDir
         self.spdxNamespacePrefix = spdxNamespacePrefix
         self.excludeDirs = excludeDirs
         self.documentNamePrefix = documentNamePrefix
+        self.packageConfigOverride = packageConfigOverride
+
 
 def getCmakeRelationships(cm):
     """
@@ -101,12 +105,16 @@ def makeCmakeSpdx(config: Config, cm, srcRootDirs, spdxOutputDir, spdxNamespaceP
     srcDocCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "sources")
     for pkgID, pkgRootDir in srcRootDirs.items():
         srcPkgCfg = BuilderPackageConfig(excludeDirs=config.excludeDirs.copy())
-        srcPkgCfg.packageName = pkgID + " sources"
+        srcPkgCfg.packageName = f"{pkgID}-sources"
         srcPkgCfg.spdxID = "SPDXRef-" + pkgID
         srcPkgCfg.doSHA256 = True
         srcPkgCfg.scandir = pkgRootDir
         # FIXME is this correct as-is, or needs adjustment / resolve relative?
         srcPkgCfg.excludeDirs.append(cm.paths_build)
+
+        if config.packageConfigOverride:
+            config.packageConfigOverride(pkgID, srcPkgCfg)
+
         srcDocCfg.packageConfigs[pkgRootDir] = srcPkgCfg
 
     srcDoc = makeSPDX(srcDocCfg, srcSpdxPath)
