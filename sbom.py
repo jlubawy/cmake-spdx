@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 from cmakefileapi import TargetType
 from cmakefileapijson import parseReply
-from spdx.builder import BuilderDocumentConfig, BuilderPackageConfig, convertToSPDXIDSafe, makeSPDX
+from spdx.builder import BuilderDocumentConfig, BuilderPackageConfig, LicenseRef, convertToSPDXIDSafe, makeSPDX
 from spdx.relationships import outputSPDXRelationships
 
 class Config:
@@ -20,13 +20,15 @@ class Config:
                  spdxNamespacePrefix: str,
                  excludeDirs: list[str],
                  documentNamePrefix: str = "",
-                 packageConfigOverride: Optional[Callable[[str, BuilderPackageConfig], None]] = None):
+                 packageConfigOverride: Optional[Callable[[str, BuilderPackageConfig], None]] = None,
+                 licenseRefs: list[LicenseRef] = []):
         self.replyIndexPath = replyIndexPath
         self.spdxOutputDir = spdxOutputDir
         self.spdxNamespacePrefix = spdxNamespacePrefix
         self.excludeDirs = excludeDirs
         self.documentNamePrefix = documentNamePrefix
         self.packageConfigOverride = packageConfigOverride
+        self.licenseRefs = licenseRefs
 
 
 def getCmakeRelationships(cm):
@@ -102,7 +104,8 @@ def makeCmakeSpdx(config: Config, cm, srcRootDirs, spdxOutputDir, spdxNamespaceP
     srcSpdxPath = os.path.join(spdxOutputDir, srcDocName + ".spdx")
     srcDocCfg = BuilderDocumentConfig()
     srcDocCfg.documentName = srcDocName
-    srcDocCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "sources")
+    srcDocCfg.documentNamespace = f"{spdxNamespacePrefix}{srcDocName}"
+    srcDocCfg.licenseRefs = config.licenseRefs
     for pkgID, pkgRootDir in srcRootDirs.items():
         srcPkgCfg = BuilderPackageConfig(excludeDirs=config.excludeDirs.copy())
         srcPkgCfg.packageName = f"{pkgID}-sources"
@@ -139,7 +142,8 @@ def makeCmakeSpdx(config: Config, cm, srcRootDirs, spdxOutputDir, spdxNamespaceP
     buildSpdxPath = os.path.join(spdxOutputDir, buildDocName + ".spdx")
     buildDocCfg = BuilderDocumentConfig()
     buildDocCfg.documentName = buildDocName
-    buildDocCfg.documentNamespace = os.path.join(spdxNamespacePrefix, "build")
+    buildDocCfg.documentNamespace = f"{spdxNamespacePrefix}{buildDocName}"
+    buildDocCfg.licenseRefs = config.licenseRefs
 
     buildPkgCfg = BuilderPackageConfig(excludeDirs=config.excludeDirs.copy())
     buildPkgCfg.packageName = "build"

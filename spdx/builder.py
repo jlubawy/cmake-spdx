@@ -5,6 +5,17 @@ import hashlib
 import os
 import re
 
+class LicenseRef:
+    """
+    SPDX License Reference
+    See https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/
+    """
+
+    def __init__(self, id: str, name: str, extractedText: str):
+        self.id = id
+        self.name = name
+        self.extractedText = extractedText
+
 class BuilderDocumentConfig:
     def __init__(self):
         super(BuilderDocumentConfig, self).__init__()
@@ -26,6 +37,8 @@ class BuilderDocumentConfig:
 
         # configs for packages: package root dir => BuilderPackageConfig
         self.packageConfigs: dict[str, BuilderPackageConfig] = {}
+
+        self.licenseRefs: list[LicenseRef] = []
 
 class BuilderPackageConfig:
 
@@ -501,6 +514,12 @@ FileChecksum: SHA1: {bf.sha1}
                         for licInfoInFile in bf.licenseInfoInFile:
                             f.write(f"LicenseInfoInFile: {licInfoInFile}\n")
                     f.write(f"FileCopyrightText: {bf.copyrightText}\n\n")
+
+            # write other licensing information detected
+            for licenseRef in doc.config.licenseRefs:
+                f.write(f"LicenseID: {licenseRef.id}\n")
+                f.write(f"ExtractedText: <text>{licenseRef.extractedText}</text>\n")
+                f.write(f"LicenseName: {licenseRef.name}\n\n")
 
             # we're done for now; will do other relationships later
             return True
