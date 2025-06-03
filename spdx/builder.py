@@ -4,6 +4,7 @@ from datetime import datetime
 import hashlib
 import os
 import re
+from typing import Optional
 
 class LicenseRef:
     """
@@ -90,6 +91,24 @@ class BuilderPackageConfig:
 
         # ExternalRef(s) for this package
         self.externalRefs: list[str] = []
+
+        # primary package purpose, if any
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#724-primary-package-purpose-field
+        self.primaryPackagePurpose: Optional[str] = None
+
+        # YYYY-MM-DDThh:mm:ssZ
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#725-release-date
+        self.releaseDate: Optional[str] = None
+
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field
+        # In tag:value format multiple lines are delimited by <text>...</text>.
+        self.packageCopyrightText = "NOASSERTION"
+
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#75-package-supplier-field
+        self.packageSupplier = "NOASSERTION"
+
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#720-package-comment-field
+        self.packageComment: Optional[str] = None
 
 class BuilderDocument:
     def __init__(self, docCfg):
@@ -490,8 +509,20 @@ PackageLicenseConcluded: {pkg.licenseConcluded}
 
                 for licFromFiles in pkg.licenseInfoFromFiles:
                     f.write(f"PackageLicenseInfoFromFiles: {licFromFiles}\n")
+
+                if pkg.config.primaryPackagePurpose is not None:
+                    f.write(f"PrimaryPackagePurpose: {pkg.config.primaryPackagePurpose}\n")
+
+                if pkg.config.releaseDate is not None:
+                    f.write(f"ReleaseDate: {pkg.config.releaseDate}\n")
+
+                f.write(f"PackageSupplier: {pkg.config.packageSupplier}\n")
+
+                if pkg.config.packageComment is not None:
+                    f.write(f"PackageComment: {pkg.config.packageComment}\n")
+
                 f.write(f"""PackageLicenseDeclared: {pkg.licenseDeclared}
-PackageCopyrightText: NOASSERTION
+PackageCopyrightText: {pkg.config.packageCopyrightText}
 
 Relationship: SPDXRef-DOCUMENT DESCRIBES {pkg.spdxID}
 
