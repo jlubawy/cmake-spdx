@@ -56,6 +56,9 @@ class BuilderPackageConfig:
         # SPDX ID for package, must begin with "SPDXRef-"
         self.spdxID = ""
 
+        # See: https://spdx.github.io/spdx-spec/v2.3/package-information/#73-package-version-field
+        self.packageVersion: Optional[str] = None
+
         # download location for package, defaults to "NOASSERTION"
         self.packageDownloadLocation = "NOASSERTION"
 
@@ -498,8 +501,12 @@ Created: {datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")}
                 f.write(f"""##### Package: {pkg.name}
 
 PackageName: {pkg.name}
-SPDXID: {pkg.spdxID}
-PackageDownloadLocation: {pkg.downloadLocation}
+SPDXID: {pkg.spdxID}\n""")
+
+                if pkg.config.packageVersion is not None:
+                    f.write(f"PackageVersion: {pkg.config.packageVersion}\n")
+
+                f.write(f"""PackageDownloadLocation: {pkg.downloadLocation}
 FilesAnalyzed: true
 PackageVerificationCode: {pkg.verificationCode}
 PackageLicenseConcluded: {pkg.licenseConcluded}
